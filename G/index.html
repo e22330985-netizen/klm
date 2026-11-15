@@ -1,0 +1,1211 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Queedle Tap — Скин Крампуса и Финал</title>
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <style>
+    * { box-sizing: border-box; user-select: none; -webkit-tap-highlight-color: transparent; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; }
+    body { background: radial-gradient(circle at top, #1e293b 0%, #090d16 100%); color: #fff; height: 100vh; display: flex; flex-direction: column; justify-content: space-between; overflow: hidden; padding: 16px; position: relative; }
+
+    /* Падающие снежинки с буквой q по центру */
+    .snowflake {
+      position: fixed;
+      top: -30px;
+      font-size: 22px;
+      color: rgba(255, 255, 255, 0.7);
+      pointer-events: none;
+      z-index: 1;
+      animation: fall linear infinite;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 26px;
+      height: 26px;
+    }
+    .snowflake .q-inside {
+      position: absolute;
+      font-size: 10px;
+      font-weight: 900;
+      color: #0f172a;
+    }
+    @keyframes fall {
+      0% { transform: translateY(-30px) rotate(0deg); opacity: 0; }
+      15% { opacity: 0.8; }
+      85% { opacity: 0.8; }
+      100% { transform: translateY(105vh) rotate(360deg); opacity: 0; }
+    }
+
+    /* Сугробы и зимний пейзаж */
+    .winter-landscape {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      height: 160px;
+      pointer-events: none;
+      z-index: 3;
+    }
+    .snow-hill {
+      position: absolute;
+      background: linear-gradient(180deg, #f1f5f9 0%, #cbd5e1 100%);
+      box-shadow: inset 0 8px 16px rgba(255, 255, 255, 0.8), 0 -6px 20px rgba(0, 0, 0, 0.4);
+      border-radius: 50% 50% 0 0;
+    }
+    .snow-hill.deep-back-1 { bottom: 20px; left: -20px; width: 320px; height: 110px; background: linear-gradient(180deg, #94a3b8 0%, #64748b 100%); opacity: 0.35; z-index: 1; }
+    .snow-hill.deep-back-2 { bottom: 15px; right: -30px; width: 340px; height: 120px; background: linear-gradient(180deg, #94a3b8 0%, #64748b 100%); opacity: 0.35; z-index: 1; }
+    .snow-hill.back-left { bottom: -5px; left: -40px; width: 240px; height: 95px; opacity: 0.65; z-index: 2; }
+    .snow-hill.back-right { bottom: -10px; right: -40px; width: 260px; height: 105px; opacity: 0.65; z-index: 2; }
+    .snow-hill.front-left { bottom: -35px; left: -30px; width: 220px; height: 95px; z-index: 4; border-radius: 60% 40% 0 0; }
+    .snow-hill.front-right { bottom: -35px; right: -30px; width: 230px; height: 100px; z-index: 4; border-radius: 40% 60% 0 0; }
+
+    /* Место раскопки елки в сугробах */
+    .snow-dig-spot {
+      position: absolute;
+      bottom: 35px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(255, 255, 255, 0.25);
+      border: 2px dashed #fde047;
+      border-radius: 16px;
+      padding: 8px 16px;
+      font-size: 14px;
+      font-weight: 800;
+      color: #fde047;
+      cursor: pointer;
+      z-index: 10;
+      display: none;
+      align-items: center;
+      gap: 6px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+      animation: pulseSpot 1.2s ease-in-out infinite alternate;
+    }
+    @keyframes pulseSpot {
+      0% { transform: translateX(-50%) scale(1); filter: drop-shadow(0 0 2px #fff); }
+      100% { transform: translateX(-50%) scale(1.08); filter: drop-shadow(0 0 10px #fde047); }
+    }
+
+    /* Верхняя панель управления и инвентарь */
+    .top-panel { display: flex; justify-content: space-between; align-items: center; z-index: 10; margin-bottom: 4px; }
+    .tabs { display: flex; gap: 6px; background: rgba(255, 255, 255, 0.05); padding: 4px; border-radius: 12px; border: 1px solid rgba(255, 255, 255, 0.1); }
+    .tab-btn { background: none; border: none; color: #94a3b8; font-size: 12px; font-weight: 700; padding: 6px 10px; border-radius: 8px; cursor: pointer; transition: all 0.2s; }
+    .tab-btn.active { background: #f59e0b; color: #1a2030; }
+    
+    .panel-buttons { display: flex; gap: 6px; z-index: 10; }
+    .action-btn { background: rgba(255, 255, 255, 0.08); border: 1px solid rgba(255, 255, 255, 0.15); border-radius: 12px; padding: 8px 10px; color: #fff; font-size: 12px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 4px; transition: transform 0.1s; }
+    .action-btn:active { transform: scale(0.95); }
+
+    .header { text-align: center; z-index: 10; position: relative; }
+    .subtitle { font-size: 12px; color: #8e96aa; text-transform: uppercase; letter-spacing: 1px; }
+    .balance-box { display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 4px; }
+    .balance-icon { font-size: 28px; }
+    #balance { font-size: 38px; font-weight: 800; }
+    .stats-row { display: flex; justify-content: center; gap: 10px; margin-top: 6px; font-size: 12px; color: #b0b8cc; }
+    .stat-badge { background: rgba(255, 255, 255, 0.07); padding: 3px 10px; border-radius: 20px; }
+
+    /* Игровые вкладки */
+    .game-screen { display: none; flex: 1; flex-direction: column; justify-content: center; align-items: center; position: relative; z-index: 5; }
+    .game-screen.active { display: flex; }
+    
+    #screen-clicker { justify-content: flex-end; padding-bottom: 55px; }
+
+    /* Экран тапера */
+    .coin-wrapper { position: relative; display: inline-block; transition: transform 0.08s ease; z-index: 5; }
+    .coin-wrapper.pressed { transform: scale(0.94); }
+    
+    #coin { width: 210px; height: 210px; border-radius: 50%; background: radial-gradient(circle at 30% 30%, #ffd86f, #f59e0b 65%, #b45309 100%); box-shadow: 0 12px 40px rgba(0, 0, 0, 0.55), inset 0 4px 12px rgba(255, 255, 255, 0.6); display: flex; align-items: center; justify-content: center; cursor: pointer; border: 8px solid #fbbf24; touch-action: manipulation; position: relative; z-index: 2; }
+    .coin-inner { width: 160px; height: 160px; border-radius: 50%; border: 3px dashed rgba(146, 64, 14, 0.45); display: flex; align-items: center; justify-content: center; font-size: 68px; font-weight: 900; color: #78350f; pointer-events: none; }
+    
+    /* Скины */
+    #coin.skin-tree { width: 240px; height: 265px; border-radius: 0; background: transparent; box-shadow: none; border: none; }
+    #coin.skin-tree .coin-inner { display: none; }
+    .tree-svg { display: none; width: 100%; height: 100%; pointer-events: none; filter: drop-shadow(0 12px 24px rgba(0, 0, 0, 0.55)); }
+    #coin.skin-tree .tree-svg { display: block; }
+
+    #coin.skin-snowman { width: 230px; height: 250px; border-radius: 0; background: transparent; box-shadow: none; border: none; }
+    #coin.skin-snowman .coin-inner { display: none; }
+    .snowman-svg { display: none; width: 100%; height: 100%; pointer-events: none; filter: drop-shadow(0 12px 24px rgba(0, 0, 0, 0.55)); }
+    #coin.skin-snowman .snowman-svg { display: block; }
+
+    #coin.skin-krampus { background: radial-gradient(circle at 30% 30%, #ef4444, #7f1d1d 65%, #090d16 100%); border: 8px solid #991b1b; box-shadow: 0 12px 40px rgba(239, 68, 68, 0.6), inset 0 4px 12px rgba(255, 255, 255, 0.3); }
+    #coin.skin-krampus .coin-inner { color: #fef2f2; }
+
+    /* Шапка Санты */
+    .coin-santa-hat { position: absolute; top: -65px; left: 50%; width: 180px; height: auto; transform: translateX(-48%) rotate(-10deg); cursor: pointer; z-index: 20; filter: drop-shadow(0 8px 16px rgba(0,0,0,0.6)); animation: hatBounce 1.5s ease-in-out infinite alternate; display: none; }
+    @keyframes hatBounce { 0% { transform: translateX(-48%) translateY(0) rotate(-10deg); } 100% { transform: translateX(-48%) translateY(-8px) rotate(-6deg); } }
+
+    .santa-hat { position: absolute; top: -58px; left: 50%; width: 195px; height: auto; transform: translateX(-46%) rotate(-12deg); transform-origin: 45% 85%; pointer-events: none; z-index: 10; filter: drop-shadow(0 8px 12px rgba(0, 0, 0, 0.45)); animation: hatSway 3s ease-in-out infinite alternate; }
+    #coin.skin-tree ~ .santa-hat, #coin.skin-snowman ~ .santa-hat, #coin.skin-krampus ~ .santa-hat { display: none; }
+    @keyframes hatSway { 0% { transform: translateX(-46%) rotate(-14deg); } 100% { transform: translateX(-46%) rotate(-8deg); } }
+
+    /* Вкладка Санты и Квесты */
+    .santa-container { position: relative; display: flex; flex-direction: column; align-items: center; }
+    .santa-avatar { font-size: 100px; line-height: 1; filter: drop-shadow(0 0 25px rgba(239, 68, 68, 0.4)); transition: transform 0.08s ease; margin-bottom: 12px; }
+    .santa-avatar.pressed { transform: scale(0.9) rotate(-4deg); }
+    
+    .santa-quest-box { background: rgba(26, 32, 48, 0.9); border: 1px solid rgba(245, 158, 11, 0.4); border-radius: 18px; padding: 16px; max-width: 320px; width: 100%; text-align: center; box-shadow: 0 8px 24px rgba(0,0,0,0.5); z-index: 10; }
+    .santa-dialogue-text { font-size: 14px; line-height: 1.4; color: #e2e8f0; margin-bottom: 16px; font-weight: 600; }
+    .santa-btn-row { display: flex; gap: 8px; justify-content: center; }
+    .santa-dialogue-btn { background: linear-gradient(90deg, #f59e0b, #fbbf24); border: none; border-radius: 10px; padding: 10px 16px; color: #1a2030; font-size: 13px; font-weight: 800; cursor: pointer; transition: transform 0.1s; }
+    .santa-dialogue-btn:active { transform: scale(0.96); }
+    .santa-dialogue-btn.secondary { background: rgba(255, 255, 255, 0.1); color: #94a3b8; border: 1px solid rgba(255, 255, 255, 0.15); }
+
+    /* Битва со Злым Снеговиком */
+    .boss-box { background: rgba(15, 23, 42, 0.95); border: 2px solid #38bdf8; border-radius: 18px; padding: 16px; max-width: 320px; width: 100%; text-align: center; box-shadow: 0 0 25px rgba(56, 189, 248, 0.4); z-index: 10; }
+    .boss-avatar { font-size: 64px; animation: bossBounce 1s ease-in-out infinite alternate; margin-bottom: 4px; }
+    @keyframes bossBounce { 0% { transform: translateY(0); } 100% { transform: translateY(-6px); } }
+    .boss-hp-bar-bg { width: 100%; height: 14px; background: rgba(255,255,255,0.1); border-radius: 10px; overflow: hidden; margin: 8px 0; border: 1px solid rgba(56,189,248,0.4); }
+    .boss-hp-bar { height: 100%; background: linear-gradient(90deg, #38bdf8, #818cf8); width: 100%; transition: width 0.1s ease; }
+    .boss-attack-btn { background: linear-gradient(90deg, #38bdf8, #60a5fa); border: none; border-radius: 12px; padding: 10px 16px; color: #0f172a; font-size: 14px; font-weight: 900; cursor: pointer; width: 100%; box-shadow: 0 4px 15px rgba(56,189,248,0.4); margin-top: 6px; }
+    .boss-attack-btn:active { transform: scale(0.96); }
+
+    /* Рейд-босс Крампус */
+    .krampus-box { background: rgba(30, 15, 42, 0.98); border: 2px solid #ef4444; border-radius: 18px; padding: 16px; max-width: 320px; width: 100%; text-align: center; box-shadow: 0 0 30px rgba(239, 68, 68, 0.5); z-index: 10; }
+    .krampus-attack-btn { background: linear-gradient(90deg, #ef4444, #dc2626); border: none; border-radius: 12px; padding: 10px 16px; color: #fff; font-size: 14px; font-weight: 900; cursor: pointer; width: 100%; box-shadow: 0 4px 15px rgba(239,68,68,0.4); margin-top: 6px; }
+    .krampus-attack-btn:active { transform: scale(0.96); }
+    
+    /* Кнопка Ярости Санты */
+    .fury-btn { background: linear-gradient(90deg, #f59e0b, #ef4444); border: none; border-radius: 12px; padding: 12px 16px; color: #fff; font-size: 14px; font-weight: 900; cursor: pointer; width: 100%; box-shadow: 0 4px 20px rgba(245, 158, 11, 0.6); margin-top: 8px; animation: furyPulse 1s ease-in-out infinite alternate; display: none; }
+    @keyframes furyPulse { 0% { transform: scale(1); filter: brightness(1); } 100% { transform: scale(1.03); filter: brightness(1.2); } }
+    .fury-btn:active { transform: scale(0.96); }
+
+    /* ФИНАЛЬНАЯ КОМНАТА С САНТОЙ */
+    .final-victory-box { background: rgba(20, 28, 48, 0.98); border: 2px solid #f59e0b; border-radius: 20px; padding: 18px; max-width: 330px; width: 100%; text-align: center; box-shadow: 0 0 35px rgba(245, 158, 11, 0.5); z-index: 10; position: relative; overflow: hidden; }
+    .garlands-header { font-size: 16px; letter-spacing: 3px; margin-bottom: 6px; animation: garlandGlow 1.5s ease-in-out infinite alternate; }
+    @keyframes garlandGlow { 0% { filter: drop-shadow(0 0 2px #f59e0b); } 100% { filter: drop-shadow(0 0 10px #ef4444); } }
+    .wall-krampus { background: rgba(0,0,0,0.3); border: 1px dashed rgba(255,255,255,0.2); border-radius: 10px; padding: 6px; font-size: 11px; color: #fca5a5; margin-bottom: 10px; display: flex; align-items: center; justify-content: center; gap: 6px; }
+    .room-scene-container { display: flex; align-items: center; justify-content: center; gap: 10px; margin: 10px 0; position: relative; }
+    .room-chair { font-size: 55px; }
+    .room-santa { font-size: 75px; position: absolute; }
+    .victory-msg { font-size: 16px; font-weight: 900; color: #fde047; text-shadow: 0 2px 8px rgba(0,0,0,0.8); margin: 12px 0 10px 0; text-transform: uppercase; line-height: 1.3; }
+
+    .santa-progress-container { width: 240px; background: rgba(255, 255, 255, 0.1); border-radius: 12px; padding: 4px; margin-top: 10px; border: 1px solid rgba(245, 158, 11, 0.3); }
+    .santa-progress-bar { height: 16px; background: linear-gradient(90deg, #f59e0b, #fde047); border-radius: 8px; width: 100%; transition: width 0.1s ease; }
+    .santa-progress-text { text-align: center; font-size: 13px; font-weight: 800; margin-top: 6px; color: #fde047; }
+
+    .floating-num { position: fixed; font-size: 26px; font-weight: 800; color: #fde047; pointer-events: none; text-shadow: 0 2px 6px rgba(0, 0, 0, 0.6); animation: floatUp 0.8s ease-out forwards; z-index: 100; }
+    @keyframes floatUp { 0% { opacity: 1; transform: translateY(0) scale(1); } 100% { opacity: 0; transform: translateY(-95px) scale(1.2); } }
+
+    /* Энергия и магазины */
+    .energy-section { margin-bottom: 12px; z-index: 10; position: relative; }
+    .energy-text { display: flex; justify-content: space-between; font-size: 13px; font-weight: 600; margin-bottom: 4px; color: #e2e8f0; }
+    .energy-bar-bg { width: 100%; height: 10px; background: rgba(255, 255, 255, 0.1); border-radius: 10px; overflow: hidden; }
+    #energy-fill { height: 100%; width: 100%; background: linear-gradient(90deg, #f59e0b, #fde047); border-radius: 10px; transition: width 0.15s ease; }
+
+    .shop { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; z-index: 10; position: relative; }
+    .upgrade-btn { background: rgba(255, 255, 255, 0.08); border: 1px solid rgba(255, 255, 255, 0.12); border-radius: 14px; padding: 10px 4px; color: #fff; display: flex; flex-direction: column; align-items: center; text-align: center; cursor: pointer; }
+    .upgrade-btn:active { transform: scale(0.96); }
+    .upgrade-btn.disabled { opacity: 0.45; pointer-events: none; }
+    .upg-icon { font-size: 18px; margin-bottom: 3px; }
+    .upg-title { font-size: 11px; font-weight: 700; }
+    .upg-lvl { font-size: 10px; color: #94a3b8; margin: 2px 0; }
+    .upg-cost { font-size: 11px; font-weight: 700; color: #fbbf24; }
+
+    /* Модальные окна */
+    .modal-overlay { position: fixed; inset: 0; background: rgba(0, 0, 0, 0.75); backdrop-filter: blur(6px); display: none; align-items: center; justify-content: center; z-index: 200; padding: 20px; }
+    .modal-overlay.active { display: flex; }
+    .modal-box { background: #1a2030; border: 1px solid rgba(255, 255, 255, 0.15); border-radius: 20px; width: 100%; max-width: 360px; max-height: 85vh; padding: 20px; text-align: center; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6); display: flex; flex-direction: column; }
+    .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; flex-shrink: 0; }
+    .modal-title { font-size: 18px; font-weight: 700; }
+    .close-btn { background: none; border: none; color: #94a3b8; font-size: 22px; cursor: pointer; line-height: 1; }
+
+    .inv-tabs { display: flex; gap: 6px; background: rgba(0, 0, 0, 0.25); padding: 4px; border-radius: 12px; margin-bottom: 16px; border: 1px solid rgba(255, 255, 255, 0.08); flex-shrink: 0; }
+    .inv-tab-btn { flex: 1; background: none; border: none; color: #94a3b8; font-size: 13px; font-weight: 700; padding: 8px; border-radius: 8px; cursor: pointer; transition: all 0.2s; }
+    .inv-tab-btn.active { background: #f59e0b; color: #1a2030; }
+
+    .inv-content-section { display: none; min-height: 165px; flex-direction: column; justify-content: flex-start; align-items: center; overflow-y: auto; flex: 1; }
+    .inv-content-section.active { display: flex; }
+
+    .no-skins-box { display: flex; flex-direction: column; align-items: center; gap: 10px; width: 100%; margin-top: 10px; }
+    .no-skins-text { font-size: 13px; color: #94a3b8; line-height: 1.4; text-align: center; }
+    
+    .goto-shop-btn { background: rgba(245, 158, 11, 0.15); border: 1px solid #f59e0b; border-radius: 10px; padding: 10px 16px; color: #fbbf24; font-size: 13px; font-weight: 800; cursor: pointer; transition: transform 0.1s; width: 100%; margin-top: 12px; }
+    .goto-shop-btn:active { transform: scale(0.96); }
+
+    .skin-item { background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 12px; padding: 10px; width: 100%; display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+    .skin-info { display: flex; align-items: center; gap: 10px; text-align: left; }
+    .skin-preview { font-size: 28px; background: rgba(0,0,0,0.3); width: 42px; height: 42px; display: flex; align-items: center; justify-content: center; border-radius: 10px; }
+    .skin-name { font-size: 13px; font-weight: 700; }
+    .skin-desc { font-size: 10px; color: #94a3b8; }
+    
+    .skin-action-btn { background: #f59e0b; border: none; border-radius: 8px; padding: 6px 12px; color: #1a2030; font-size: 11px; font-weight: 800; cursor: pointer; }
+    .skin-action-btn.active-skin { background: #22c55e; color: #fff; }
+    .skin-action-btn.disabled { opacity: 0.4; pointer-events: none; }
+
+    /* Сетка Адвент-календаря */
+    .advent-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; width: 100%; padding-bottom: 10px; }
+    .advent-card { background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 12px; padding: 10px 4px; display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s; min-height: 70px; }
+    .advent-card.available { background: rgba(245, 158, 11, 0.15); border-color: #f59e0b; }
+    .advent-card.claimed { background: rgba(34, 197, 94, 0.1); border-color: rgba(34, 197, 94, 0.3); opacity: 0.6; }
+    .advent-card.locked { opacity: 0.35; pointer-events: none; }
+    .advent-day { font-size: 13px; font-weight: 800; color: #fde047; }
+    .advent-desc { font-size: 9px; color: #cbd5e1; margin-top: 4px; text-align: center; }
+
+    .promo-input { width: 100%; background: rgba(0, 0, 0, 0.35); border: 1px solid rgba(255, 255, 255, 0.2); border-radius: 12px; padding: 12px; color: #fff; font-size: 16px; text-align: center; text-transform: uppercase; margin-bottom: 12px; outline: none; user-select: text; }
+    .promo-input:focus { border-color: #fbbf24; }
+    .promo-submit { width: 100%; background: linear-gradient(90deg, #f59e0b, #fbbf24); border: none; border-radius: 12px; padding: 12px; color: #1a2030; font-size: 15px; font-weight: 800; cursor: pointer; }
+    .promo-submit:active { transform: scale(0.98); }
+    .promo-msg { margin-top: 10px; font-size: 13px; min-height: 18px; font-weight: 600; }
+    .promo-msg.success { color: #4ade80; }
+    .promo-msg.error { color: #f87171; }
+  </style>
+</head>
+<body>
+
+  <!-- Верхняя панель -->
+  <div class="top-panel">
+    <div class="tabs">
+      <button class="tab-btn active" id="btn-tab-clicker" onclick="switchTab('clicker')">🪙 Кликер</button>
+      <button class="tab-btn" id="btn-tab-santa" onclick="switchTab('santa')">🎅 Санта</button>
+    </div>
+    <div class="panel-buttons">
+      <button class="action-btn" onclick="openAdventModal()">🎄 Адвент</button>
+      <button class="action-btn" onclick="openInventoryModal()">🎒 Инвентарь</button>
+    </div>
+  </div>
+
+  <div class="header">
+    <div class="subtitle" id="sub-title-mode">Queedle Coin</div>
+    <div class="balance-box"><span class="balance-icon">🪙</span><span id="balance">0</span></div>
+    <div class="stats-row" id="stats-clicker-row">
+      <div class="stat-badge">👆 +<span id="tap-power-lbl">1</span> за тап</div>
+      <div class="stat-badge">🤖 +<span id="auto-income-lbl">0</span> / сек</div>
+    </div>
+    <div class="stats-row" id="stats-santa-row" style="display: none;">
+      <div class="stat-badge">🎁 Подарки: <span id="santa-total-gifts-lbl">0</span> / 10K</div>
+    </div>
+  </div>
+
+  <!-- ВКЛАДКА 1: КЛИКЕР -->
+  <div class="game-screen active" id="screen-clicker">
+    <!-- Кнопка раскопки елки в сугробах -->
+    <div class="snow-dig-spot" id="snow-dig-spot" onclick="digOutTree()">
+      🌲✨ Откопать ёлку лопатой
+    </div>
+
+    <div class="coin-wrapper" id="coin-wrapper">
+      <div id="coin">
+        <div class="coin-inner" id="coin-inner-txt">Q</div>
+        
+        <!-- Векторная Ёлка -->
+        <svg class="tree-svg" viewBox="0 0 240 270" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <linearGradient id="treeGrad1" x1="120" y1="45" x2="120" y2="125" gradientUnits="userSpaceOnUse"><stop offset="0%" stop-color="#4ade80"/><stop offset="100%" stop-color="#15803d"/></linearGradient>
+            <linearGradient id="treeGrad2" x1="120" y1="95" x2="120" y2="180" gradientUnits="userSpaceOnUse"><stop offset="0%" stop-color="#22c55e"/><stop offset="100%" stop-color="#166534"/></linearGradient>
+            <linearGradient id="treeGrad3" x1="120" y1="145" x2="120" y2="230" gradientUnits="userSpaceOnUse"><stop offset="0%" stop-color="#16a34a"/><stop offset="100%" stop-color="#14532d"/></linearGradient>
+            <linearGradient id="trunkGrad" x1="100" y1="220" x2="140" y2="260" gradientUnits="userSpaceOnUse"><stop offset="0%" stop-color="#92400e"/><stop offset="100%" stop-color="#451a03"/></linearGradient>
+            <linearGradient id="treeHatRed" x1="95" y1="10" x2="155" y2="55" gradientUnits="userSpaceOnUse"><stop offset="0%" stop-color="#ff4d4d"/><stop offset="100%" stop-color="#b91c1c"/></linearGradient>
+          </defs>
+          <rect x="102" y="222" width="36" height="36" rx="6" fill="url(#trunkGrad)"/>
+          <path d="M120 135 L32 225 Q120 238 208 225 Z" fill="url(#treeGrad3)" stroke="#14532d" stroke-width="2" stroke-linejoin="round"/>
+          <path d="M120 85 L48 172 Q120 184 192 172 Z" fill="url(#treeGrad2)" stroke="#166534" stroke-width="2" stroke-linejoin="round"/>
+          <path d="M120 42 L68 118 Q120 128 172 118 Z" fill="url(#treeGrad1)" stroke="#15803d" stroke-width="2" stroke-linejoin="round"/>
+          <circle cx="88" cy="105" r="6" fill="#ef4444"/><circle cx="152" cy="105" r="6" fill="#3b82f6"/>
+          <circle cx="72" cy="158" r="7" fill="#facc15"/><circle cx="168" cy="158" r="7" fill="#ef4444"/>
+          <circle cx="60" cy="212" r="8" fill="#3b82f6"/><circle cx="180" cy="212" r="8" fill="#facc15"/><circle cx="120" cy="216" r="7" fill="#ef4444"/>
+          <text x="120" y="176" text-anchor="middle" fill="#fde047" stroke="#78350f" stroke-width="3" paint-order="stroke" font-size="66" font-weight="900" font-family="sans-serif">Q</text>
+          <g transform="translate(82, 2) rotate(-8 38 42)">
+            <path d="M14 42 C18 14, 48 4, 72 18 C84 25, 92 36, 92 44 C82 38, 72 39, 66 44 C50 38, 30 39, 14 42 Z" fill="url(#treeHatRed)"/>
+            <circle cx="92" cy="45" r="9" fill="#f8fafc"/>
+            <rect x="10" y="38" width="62" height="12" rx="6" fill="#ffffff"/>
+          </g>
+        </svg>
+
+        <!-- Векторный Снеговик -->
+        <svg class="snowman-svg" viewBox="0 0 240 260" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="120" cy="180" r="55" fill="#f1f5f9" stroke="#cbd5e1" stroke-width="4"/>
+          <circle cx="120" cy="115" r="40" fill="#f1f5f9" stroke="#cbd5e1" stroke-width="4"/>
+          <circle cx="120" cy="65" r="28" fill="#f1f5f9" stroke="#cbd5e1" stroke-width="4"/>
+          <circle cx="112" cy="60" r="3.5" fill="#0f172a"/><circle cx="128" cy="60" r="3.5" fill="#0f172a"/>
+          <path d="M114 74 Q120 82 126 74" stroke="#0f172a" stroke-width="3" stroke-linecap="round"/>
+          <path d="M120 67 L142 70 L120 73 Z" fill="#f97316"/>
+          <rect x="100" y="18" width="40" height="20" rx="3" fill="#1e293b"/>
+          <rect x="90" y="36" width="60" height="5" rx="2" fill="#1e293b"/>
+          <path d="M96 92 C110 88, 130 88, 144 92 C148 93, 142 102, 135 100 C125 97, 115 97, 105 100 C98 102, 92 93, 96 92 Z" fill="#ef4444"/>
+          <path d="M132 100 L145 130 L132 135 Z" fill="#ef4444"/>
+          <circle cx="120" cy="115" r="4" fill="#1e293b"/>
+          <circle cx="120" cy="160" r="4" fill="#1e293b"/>
+          <circle cx="120" cy="185" r="4" fill="#1e293b"/>
+        </svg>
+      </div>
+
+      <!-- Шапка Санты для квеста на монете -->
+      <svg class="coin-santa-hat" id="coin-santa-hat" onclick="collectSantaHat()" viewBox="0 0 240 165" fill="none" xmlns="http://www.w3.org/2000/svg" aria-label="Найти шапку">
+        <defs>
+          <linearGradient id="questHatRed" x1="35" y1="20" x2="180" y2="120" gradientUnits="userSpaceOnUse"><stop offset="0%" stop-color="#ff4d4d"/><stop offset="55%" stop-color="#dc2626"/><stop offset="100%" stop-color="#991b1b"/></linearGradient>
+          <linearGradient id="questFurWhite" x1="100" y1="90" x2="100" y2="145" gradientUnits="userSpaceOnUse"><stop offset="0%" stop-color="#ffffff"/><stop offset="70%" stop-color="#f1f5f9"/><stop offset="100%" stop-color="#cbd5e1"/></linearGradient>
+          <radialGradient id="questPompom" cx="35%" cy="35%" r="65%"><stop offset="0%" stop-color="#ffffff"/><stop offset="75%" stop-color="#e2e8f0"/><stop offset="100%" stop-color="#94a3b8"/></radialGradient>
+        </defs>
+        <path d="M28 106 C38 38, 105 12, 165 38 C195 51, 212 75, 214 96 C195 85, 178 86, 166 98 C128 84, 72 86, 28 106 Z" fill="url(#questHatRed)"/>
+        <circle cx="212" cy="100" r="21" fill="url(#questPompom)"/>
+        <path d="M18 112 C12 96, 30 85, 48 89 C66 78, 92 76, 112 83 C134 76, 160 80, 175 93 C192 92, 202 106, 193 121 C186 132, 168 131, 155 123 C134 114, 78 112, 52 121 C38 128, 22 125, 18 112 Z" fill="url(#questFurWhite)"/>
+      </svg>
+
+      <!-- Обычная шапка когда надета -->
+      <svg class="santa-hat" id="active-santa-hat" viewBox="0 0 240 165" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" style="display: none;">
+        <defs>
+          <linearGradient id="hatRed" x1="35" y1="20" x2="180" y2="120" gradientUnits="userSpaceOnUse"><stop offset="0%" stop-color="#ff4d4d"/><stop offset="55%" stop-color="#dc2626"/><stop offset="100%" stop-color="#991b1b"/></linearGradient>
+          <linearGradient id="furWhite" x1="100" y1="90" x2="100" y2="145" gradientUnits="userSpaceOnUse"><stop offset="0%" stop-color="#ffffff"/><stop offset="70%" stop-color="#f1f5f9"/><stop offset="100%" stop-color="#cbd5e1"/></linearGradient>
+          <radialGradient id="pompomGrad" cx="35%" cy="35%" r="65%"><stop offset="0%" stop-color="#ffffff"/><stop offset="75%" stop-color="#e2e8f0"/><stop offset="100%" stop-color="#94a3b8"/></radialGradient>
+        </defs>
+        <path d="M28 106 C38 38, 105 12, 165 38 C195 51, 212 75, 214 96 C195 85, 178 86, 166 98 C128 84, 72 86, 28 106 Z" fill="url(#hatRed)"/>
+        <path d="M46 92 C58 46, 104 28, 152 44" stroke="#fca5a5" stroke-width="5" stroke-linecap="round" opacity="0.45"/>
+        <circle cx="212" cy="100" r="21" fill="url(#pompomGrad)"/>
+        <path d="M18 112 C12 96, 30 85, 48 89 C66 78, 92 76, 112 83 C134 76, 160 80, 175 93 C192 92, 202 106, 193 121 C186 132, 168 131, 155 123 C134 114, 78 112, 52 121 C38 128, 22 125, 18 112 Z" fill="url(#furWhite)"/>
+      </svg>
+    </div>
+
+    <div class="winter-landscape">
+      <div class="snow-hill deep-back-1"></div>
+      <div class="snow-hill deep-back-2"></div>
+      <div class="snow-hill back-left"></div>
+      <div class="snow-hill back-right"></div>
+      <div class="snow-hill front-left"></div>
+      <div class="snow-hill front-right"></div>
+    </div>
+  </div>
+
+  <!-- ВКЛАДКА 2: САНТА / БОССЫ -->
+  <div class="game-screen" id="screen-santa">
+    <div class="santa-container" id="santa-container">
+      <div class="santa-avatar" id="santa-avatar">🎅</div>
+
+      <!-- Квест-диалог Санты -->
+      <div class="santa-quest-box" id="santa-quest-box">
+        <div class="santa-dialogue-text" id="santa-dialogue-text">Привет! Нажми «Поговорить», чтобы узнать, что случилось.</div>
+        <div class="santa-btn-row" id="santa-quest-btns">
+          <button class="santa-dialogue-btn" onclick="santaTalk()">💬 Поговорить</button>
+        </div>
+      </div>
+
+      <!-- Битва со Злым Снеговиком -->
+      <div class="boss-box" id="boss-box" style="display: none;">
+        <div class="boss-avatar">⛄</div>
+        <div style="font-size: 14px; font-weight: 900; color: #38bdf8; margin-bottom: 2px;">Злой Снеговик</div>
+        <div class="boss-hp-bar-bg"><div class="boss-hp-bar" id="boss-hp-bar"></div></div>
+        <div style="font-size: 11px; font-weight: 800; color: #fde047; margin-bottom: 6px;" id="boss-hp-text">Здоровье: 500 / 500</div>
+        <button class="boss-attack-btn" onclick="attackBoss(event)">⚔️ АТАКА (Сила тапа)</button>
+      </div>
+
+      <!-- Рейд-босс Крампус -->
+      <div class="krampus-box" id="krampus-box" style="display: none;">
+        <div class="boss-avatar">👹</div>
+        <div style="font-size: 15px; font-weight: 900; color: #ef4444; margin-bottom: 2px;">Ледяной Крампус (Рейд)</div>
+        <div style="font-size: 10px; color: #fca5a5; margin-bottom: 4px;">Регенерация: +10 000 HP/сек</div>
+        <div class="boss-hp-bar-bg"><div class="boss-hp-bar" id="krampus-hp-bar" style="background: linear-gradient(90deg, #ef4444, #f87171);"></div></div>
+        <div style="font-size: 11px; font-weight: 800; color: #fde047; margin-bottom: 2px;" id="krampus-hp-text">Здоровье: 10M / 10M</div>
+        <div style="font-size: 10px; color: #fde047; margin-bottom: 6px;" id="fury-progress-text">Ярость Санты: 0 / 10 000 урона</div>
+        <button class="krampus-attack-btn" onclick="attackKrampus(event)">⚔️ УДАР ПО КРАМПУСУ</button>
+        <button class="fury-btn" id="fury-btn" onclick="useSantaFury(event)">🎅 АКТИВИРОВАТЬ ЯРОСТЬ САНТЫ (-1M HP)!</button>
+      </div>
+
+      <!-- ФИНАЛЬНАЯ КОМНАТА ПОСЛЕ КРАМПУСА -->
+      <div class="final-victory-box" id="final-victory-box" style="display: none;">
+        <div class="garlands-header">✨🎄 🔴 🟢 🔵 🎄✨</div>
+        <div class="wall-krampus">
+          <span>🖼️ Голова Крампуса</span>
+          <span style="font-size: 20px;">👹</span>
+        </div>
+        <div class="room-scene-container">
+          <div class="room-chair">🪑</div>
+          <div class="room-santa">🎅</div>
+        </div>
+        <div class="victory-msg">ТЫ ПОМОГ САНТЕ СПАСИБО</div>
+        <button class="krampus-attack-btn" onclick="resetEventOnly()" style="margin-top: 8px;">🔄 Сбросить ивент (переиграть Крампуса)</button>
+      </div>
+
+      <!-- Игровой процесс Санты -->
+      <div id="santa-game-content" style="display: none; flex-direction: column; align-items: center; width: 100%;">
+        <div class="santa-progress-container">
+          <div class="santa-progress-bar" id="santa-progress-bar"></div>
+        </div>
+        <div class="santa-progress-text" id="santa-progress-text">Подарок: 0 / 100</div>
+      </div>
+    </div>
+  </div>
+
+  <div>
+    <div class="energy-section">
+      <div class="energy-text"><span>⚡ Энергия</span><span><span id="energy">500</span> / <span id="max-energy">500</span></span></div>
+      <div class="energy-bar-bg"><div id="energy-fill"></div></div>
+    </div>
+    
+    <div class="shop" id="shop-clicker">
+      <button class="upgrade-btn" id="btn-tap" onclick="buyUpgrade('tap')"><span class="upg-icon">💪</span><span class="upg-title">Мультитап</span><span class="upg-lvl" id="lvl-tap">Ур. 1</span><span class="upg-cost" id="cost-tap">50 🪙</span></button>
+      <button class="upgrade-btn" id="btn-auto" onclick="buyUpgrade('auto')"><span class="upg-icon">🤖</span><span class="upg-title">Автоклик</span><span class="upg-lvl" id="lvl-auto">Ур. 0</span><span class="upg-cost" id="cost-auto">100 🪙</span></button>
+      <button class="upgrade-btn" id="btn-energy" onclick="buyUpgrade('energy')"><span class="upg-icon">🔋</span><span class="upg-title">Запас ⚡</span><span class="upg-lvl" id="lvl-energy">Ур. 1</span><span class="upg-cost" id="cost-energy">80 🪙</span></button>
+    </div>
+
+    <!-- Магазин Санты -->
+    <div class="shop" id="shop-santa" style="display: none;">
+      <button class="upgrade-btn" id="btn-s-power" onclick="buySantaUpgrade('power')"><span class="upg-icon">🎁</span><span class="upg-title">Щедрость</span><span class="upg-lvl" id="lvl-s-power">Ур. 1</span><span class="upg-cost" id="cost-s-power">60 🪙</span></button>
+      <button class="upgrade-btn" id="btn-s-bonus" onclick="buySantaUpgrade('bonus')"><span class="upg-icon">⭐</span><span class="upg-title">Мешок</span><span class="upg-lvl" id="lvl-s-bonus">Ур. 1</span><span class="upg-cost" id="cost-s-bonus">100 🪙</span></button>
+    </div>
+  </div>
+
+  <!-- МОДАЛЬНОЕ ОКНО АДВЕНТ-КАЛЕНДАРЯ -->
+  <div class="modal-overlay" id="advent-modal" onclick="closeAdventModal(event)">
+    <div class="modal-box" onclick="event.stopPropagation()">
+      <div class="modal-header">
+        <span class="modal-title">🎄 Новогодний Адвент</span>
+        <button class="close-btn" onclick="closeAdventModal()">&times;</button>
+      </div>
+      <div style="font-size: 11px; color: #94a3b8; margin-bottom: 12px; text-align: left;">Забирай ежедневные подарки с 1 по 31 декабря!</div>
+      <div class="advent-grid" id="advent-grid-container"></div>
+    </div>
+  </div>
+
+  <!-- МОДАЛЬНОЕ ОКНО ИНВЕНТАРЯ -->
+  <div class="modal-overlay" id="inventory-modal" onclick="closeInventoryModal(event)">
+    <div class="modal-box" onclick="event.stopPropagation()">
+      <div class="modal-header">
+        <span class="modal-title" id="modal-main-title">🎒 Инвентарь</span>
+        <button class="close-btn" onclick="closeInventoryModal()">&times;</button>
+      </div>
+
+      <div class="inv-tabs" id="inv-tabs-bar">
+        <button class="inv-tab-btn active" id="btn-inv-skins" onclick="switchInvTab('skins')">👕 Скины</button>
+        <button class="inv-tab-btn" id="btn-inv-promos" onclick="switchInvTab('promos')">🎁 Промокоды</button>
+      </div>
+
+      <div class="inv-content-section active" id="inv-section-skins">
+        <div id="skins-inventory-container" style="width: 100%;"></div>
+      </div>
+
+      <div class="inv-content-section" id="inv-section-skinshop">
+        <div id="skin-shop-items-container" style="width: 100%;"></div>
+        <button class="goto-shop-btn" onclick="switchInvTab('skins')">← Назад в инвентарь</button>
+      </div>
+
+      <div class="inv-section-section" id="inv-section-promos" style="display: none; flex-direction: column; width: 100%;">
+        <input type="text" id="promo-input" class="promo-input" placeholder="Введите код..." autocomplete="off" />
+        <button class="promo-submit" onclick="redeemPromo()">Активировать</button>
+        <div class="promo-msg" id="promo-msg"></div>
+      </div>
+
+    </div>
+  </div>
+
+  <script>
+    const tg = window.Telegram && window.Telegram.WebApp;
+    if (tg) { try { tg.ready(); tg.expand(); tg.setHeaderColor('#1e293b'); } catch(e) {} }
+
+    function createSnowflake() {
+      const snow = document.createElement('div');
+      snow.className = 'snowflake';
+      snow.innerHTML = '❄<span class="q-inside">q</span>';
+      snow.style.left = Math.random() * window.innerWidth + 'px';
+      const duration = Math.random() * 3 + 3;
+      snow.style.animationDuration = duration + 's';
+      document.body.appendChild(snow);
+      setTimeout(() => snow.remove(), duration * 1000);
+    }
+    setInterval(createSnowflake, 350);
+
+    let savedData = null;
+    try { savedData = JSON.parse(localStorage.getItem('queedle_tap_save_v33')); } catch(e) {}
+
+    let state = Object.assign({
+      balance: 0, tapPower: 1, tapLvl: 1, tapCost: 50,
+      autoIncome: 0, autoLvl: 0, autoCost: 100,
+      energy: 500, maxEnergy: 500, energyLvl: 1, energyCost: 80,
+      santaGoalMax: 100, santaProgress: 0, santaLevel: 1,
+      santaGoalMultiplier: 1.0,
+      santaPower: 1, santaPowerLvl: 1, santaPowerCost: 60,
+      santaBonus: 500, santaBonusLvl: 1, santaBonusCost: 100,
+      ownedSkins: [],
+      activeSkin: null,
+      usedPromos: [],
+      claimedAdventDays: [],
+      santaQuest: 'start',
+      hasSantaHat: false,
+      totalSantaGifts: 0,
+      treeQuestStatus: 'none',
+      hasShovel: false,
+      hasTreeItem: false,
+      snowmanHP: 500,
+      snowmanMaxHP: 500,
+      bossDefeated: false,
+      krampusHP: 10000000,
+      krampusMaxHP: 10000000,
+      krampusDefeated: false,
+      krampusBeatenOnce: false,
+      furyProgress: 0
+    }, savedData);
+
+    const ADVENT_REWARDS = {
+      1:  { type: 'coins', val: 500, text: '500 🪙' },
+      2:  { type: 'energy', val: 0, text: 'Энергия ⚡' },
+      3:  { type: 'coins', val: 1000, text: '1K 🪙' },
+      4:  { type: 'coins', val: 1500, text: '1.5K 🪙' },
+      5:  { type: 'tap', val: 1, text: '+1 Тап 💪' },
+      6:  { type: 'coins', val: 2000, text: '2K 🪙' },
+      7:  { type: 'coins', val: 2500, text: '2.5K 🪙' },
+      8:  { type: 'energy', val: 0, text: 'Энергия ⚡' },
+      9:  { type: 'coins', val: 3000, text: '3K 🪙' },
+      10: { type: 'coins', val: 4000, text: '4K 🪙' },
+      11: { type: 'coins', val: 5000, text: '5K 🪙' },
+      12: { type: 'tap', val: 2, text: '+2 Тап 💪' },
+      13: { type: 'coins', val: 6000, text: '6K 🪙' },
+      14: { type: 'coins', val: 7500, text: '7.5K 🪙' },
+      15: { type: 'coins', val: 10000, text: '10K 🪙' },
+      16: { type: 'coins', val: 12000, text: '12K 🪙' },
+      17: { type: 'coins', val: 15000, text: '15K 🪙' },
+      18: { type: 'energy', val: 0, text: 'Энергия ⚡' },
+      19: { type: 'coins', val: 18000, text: '18K 🪙' },
+      20: { type: 'coins', val: 20000, text: '20K 🪙' },
+      21: { type: 'coins', val: 25000, text: '25K 🪙' },
+      22: { type: 'tap', val: 3, text: '+3 Тап 💪' },
+      23: { type: 'coins', val: 30000, text: '30K 🪙' },
+      24: { type: 'coins', val: 40000, text: '40K 🪙' },
+      25: { type: 'coins', val: 50000, text: '50K 🪙' },
+      26: { type: 'coins', val: 60000, text: '60K 🪙' },
+      27: { type: 'coins', val: 75000, text: '75K 🪙' },
+      28: { type: 'coins', val: 90000, text: '90K 🪙' },
+      29: { type: 'coins', val: 100000, text: '100K 🪙' },
+      30: { type: 'coins', val: 150000, text: '150K 🪙' },
+      31: { type: 'coins', val: 500000, text: '500K 🎄' }
+    };
+
+    const PROMO_CODES = {
+      'START': { type: 'coins', value: 500, text: '+500 🪙 монет!' },
+      'QUEEDLE': { type: 'coins', value: 2500, text: '+2 500 🪙 монет!' },
+      'ENERGY': { type: 'energy', value: 0, text: '⚡ Энергия восстановлена!' },
+      'BOOST': { type: 'tap', value: 2, text: '👆 +2 к силе тапа!' },
+      'RICH': { type: 'coins', value: 1000000, text: '+1 000 000 🪙 монет для покупки скина!' }
+    };
+
+    let currentTab = 'clicker';
+    const coinEl = document.getElementById('coin');
+    const coinWrapperEl = document.getElementById('coin-wrapper');
+    const coinInnerTxt = document.getElementById('coin-inner-txt');
+    const santaContainer = document.getElementById('santa-container');
+    const santaAvatar = document.getElementById('santa-avatar');
+
+    function saveState() { try { localStorage.setItem('queedle_tap_save_v33', JSON.stringify(state)); } catch(e) {} }
+
+    function switchTab(tab) {
+      currentTab = tab;
+      document.getElementById('screen-clicker').classList.toggle('active', tab === 'clicker');
+      document.getElementById('screen-santa').classList.toggle('active', tab === 'santa');
+      document.getElementById('btn-tab-clicker').classList.toggle('active', tab === 'clicker');
+      document.getElementById('btn-tab-santa').classList.toggle('active', tab === 'santa');
+      
+      document.getElementById('shop-clicker').style.display = tab === 'clicker' ? 'grid' : 'none';
+      document.getElementById('shop-santa').style.display = tab === 'santa' ? 'grid' : 'none';
+      
+      document.getElementById('stats-clicker-row').style.display = tab === 'clicker' ? 'flex' : 'none';
+      document.getElementById('stats-santa-row').style.display = tab === 'santa' ? 'flex' : 'none';
+      
+      let titleMode = 'Queedle Coin';
+      if (tab === 'santa') {
+        if (state.santaQuest !== 'completed') titleMode = 'Встреча с Сантой';
+        else if (state.treeQuestStatus !== 'done') titleMode = 'Квест с Ёлкой';
+        else if (!state.bossDefeated) titleMode = 'Битва со Снеговиком';
+        else titleMode = 'Рейд Крампуса (Финал)';
+      }
+      document.getElementById('sub-title-mode').textContent = titleMode;
+    }
+
+    function updateUI() {
+      document.getElementById('balance').textContent = Math.floor(state.balance).toLocaleString('ru-RU');
+      document.getElementById('tap-power-lbl').textContent = state.tapPower;
+      document.getElementById('auto-income-lbl').textContent = state.autoIncome;
+      document.getElementById('energy').textContent = Math.floor(state.energy);
+      document.getElementById('max-energy').textContent = state.maxEnergy;
+      document.getElementById('energy-fill').style.width = (state.energy / state.maxEnergy * 100) + '%';
+      
+      document.getElementById('lvl-tap').textContent = 'Ур. ' + state.tapLvl;
+      document.getElementById('cost-tap').textContent = state.tapCost + ' 🪙';
+      document.getElementById('lvl-auto').textContent = 'Ур. ' + state.autoLvl;
+      document.getElementById('cost-auto').textContent = state.autoCost + ' 🪙';
+      document.getElementById('lvl-energy').textContent = 'Ур. ' + state.energyLvl;
+      document.getElementById('cost-energy').textContent = state.energyCost + ' 🪙';
+      document.getElementById('btn-tap').classList.toggle('disabled', state.balance < state.tapCost);
+      document.getElementById('btn-auto').classList.toggle('disabled', state.balance < state.autoCost);
+      document.getElementById('btn-energy').classList.toggle('disabled', state.balance < state.energyCost);
+
+      document.getElementById('lvl-s-power').textContent = 'Ур. ' + state.santaPowerLvl;
+      document.getElementById('cost-s-power').textContent = state.santaPowerCost + ' 🪙';
+      document.getElementById('lvl-s-bonus').textContent = 'Ур. ' + state.santaBonusLvl;
+      document.getElementById('cost-s-bonus').textContent = state.santaBonusCost + ' 🪙';
+      document.getElementById('btn-s-power').classList.toggle('disabled', state.balance < state.santaPowerCost);
+      document.getElementById('btn-s-bonus').classList.toggle('disabled', state.balance < state.santaBonusCost);
+
+      document.getElementById('santa-total-gifts-lbl').textContent = Math.min(10000, state.totalSantaGifts);
+
+      if (state.activeSkin === 'tree') {
+        coinEl.classList.add('skin-tree');
+        coinEl.classList.remove('skin-snowman', 'skin-krampus');
+      } else if (state.activeSkin === 'snowman') {
+        coinEl.classList.add('skin-snowman');
+        coinEl.classList.remove('skin-tree', 'skin-krampus');
+      } else if (state.activeSkin === 'krampus') {
+        coinEl.classList.add('skin-krampus');
+        coinEl.classList.remove('skin-tree', 'skin-snowman');
+        coinInnerTxt.textContent = '👹';
+      } else {
+        coinEl.classList.remove('skin-tree', 'skin-snowman', 'skin-krampus');
+        coinInnerTxt.textContent = 'Q';
+      }
+
+      const hpPercent = Math.max(0, (state.snowmanHP / state.snowmanMaxHP) * 100);
+      document.getElementById('boss-hp-bar').style.width = hpPercent + '%';
+      document.getElementById('boss-hp-text').textContent = `Здоровье: ${Math.max(0, state.snowmanHP)} / ${state.snowmanMaxHP}`;
+
+      const krampusPercent = Math.max(0, (state.krampusHP / state.krampusMaxHP) * 100);
+      document.getElementById('krampus-hp-bar').style.width = krampusPercent + '%';
+      document.getElementById('krampus-hp-text').textContent = `Здоровье: ${Math.max(0, Math.floor(state.krampusHP)).toLocaleString()} / ${state.krampusMaxHP.toLocaleString()}`;
+
+      const furyBtn = document.getElementById('fury-btn');
+      const furyText = document.getElementById('fury-progress-text');
+      if (furyBtn && furyText) {
+        if (state.furyProgress >= 10000) {
+          furyText.textContent = `⚡ Ярость Санты готова!`;
+          furyBtn.style.display = 'block';
+        } else {
+          furyText.textContent = `Ярость Санты: ${Math.floor(state.furyProgress).toLocaleString()} / 10 000 урона`;
+          furyBtn.style.display = 'none';
+        }
+      }
+
+      renderSantaQuestUI();
+
+      const coinHat = document.getElementById('coin-santa-hat');
+      if (coinHat) {
+        coinHat.style.display = (state.santaQuest === 'searching') ? 'block' : 'none';
+      }
+
+      const digSpot = document.getElementById('snow-dig-spot');
+      if (digSpot) {
+        digSpot.style.display = (state.treeQuestStatus === 'active') ? 'flex' : 'none';
+      }
+    }
+
+    function renderSantaQuestUI() {
+      const questBox = document.getElementById('santa-quest-box');
+      const bossBox = document.getElementById('boss-box');
+      const krampusBox = document.getElementById('krampus-box');
+      const finalVictoryBox = document.getElementById('final-victory-box');
+      const gameContent = document.getElementById('santa-game-content');
+      const textEl = document.getElementById('santa-dialogue-text');
+      const btnsEl = document.getElementById('santa-quest-btns');
+      const avatarEl = document.getElementById('santa-avatar');
+      const activeHat = document.getElementById('active-santa-hat');
+
+      if (state.santaQuest !== 'completed') {
+        questBox.style.display = 'block';
+        bossBox.style.display = 'none';
+        krampusBox.style.display = 'none';
+        finalVictoryBox.style.display = 'none';
+        gameContent.style.display = 'none';
+        avatarEl.textContent = '🎅';
+
+        if (state.santaQuest === 'start') {
+          textEl.textContent = 'Привет! Санта выглядит грустно и замёрзшим без головного убора.';
+          btnsEl.innerHTML = `<button class="santa-dialogue-btn" onclick="santaTalk()">💬 Поговорить</button>`;
+        } else if (state.santaQuest === 'dialogue_active') {
+          textEl.textContent = '🎅 Санта: «Можешь мне помочь найти мою шапку, а то без нее уши мерзнут?»';
+          btnsEl.innerHTML = `
+            <button class="santa-dialogue-btn" onclick="acceptQuest()">👍 Помочь</button>
+            <button class="santa-dialogue-btn secondary" onclick="refuseQuest()">👎 Отказаться</button>
+          `;
+        } else if (state.santaQuest === 'refused') {
+          textEl.textContent = '🎅 Санта: «Ну и ладно, сам найду... Эх, холодно.»';
+          btnsEl.innerHTML = `<button class="santa-dialogue-btn secondary" onclick="resetQuest()">🔄 Спросить</button>`;
+        } else if (state.santaQuest === 'searching') {
+          textEl.textContent = '🎅 Санта: «Поищи мою шапку на главной монете во вкладке «Кликер»!»';
+          btnsEl.innerHTML = `<button class="santa-dialogue-btn secondary" onclick="switchTab('clicker')">🪙 К монете</button>`;
+        } else if (state.santaQuest === 'found') {
+          textEl.textContent = '🎅 Санта: «Ты нашел шапку! Скорее надень её на меня!»';
+          btnsEl.innerHTML = `<button class="santa-dialogue-btn" onclick="completeQuest()">🎄 Отдать шапку</button>`;
+        }
+        return;
+      }
+
+      if (state.treeQuestStatus !== 'done') {
+        questBox.style.display = 'block';
+        bossBox.style.display = 'none';
+        krampusBox.style.display = 'none';
+        finalVictoryBox.style.display = 'none';
+        gameContent.style.display = 'none';
+        avatarEl.textContent = '🎅🎁';
+        activeHat.style.display = (state.activeSkin === 'tree' || state.activeSkin === 'snowman' || state.activeSkin === 'krampus') ? 'none' : 'block';
+
+        if (state.treeQuestStatus === 'none') {
+          textEl.textContent = '🎅 Санта: «Мы собрали 10 000 подарков! Но в сугробах спрятана Новогодняя Ёлка. Возьми лопату и откопай её!»';
+          btnsEl.innerHTML = `<button class="santa-dialogue-btn" onclick="startTreeQuest()">⛏️ Взять лопату</button>`;
+        } else if (state.treeQuestStatus === 'active') {
+          textEl.textContent = '🎅 Санта: «Иди на главный экран («Кликер») и найди мерцающую точку в сугробах!»';
+          btnsEl.innerHTML = `<button class="santa-dialogue-btn secondary" onclick="switchTab('clicker')">🪙 К сугробам</button>`;
+        } else if (state.treeQuestStatus === 'dug') {
+          textEl.textContent = '🎅 Санта: «Ты откопал ёлку! Принеси её мне за 1 миллиард монет!»';
+          btnsEl.innerHTML = `<button class="santa-dialogue-btn" onclick="deliverTree()">🌟 Отдать ёлку (+1 лярд)</button>`;
+        }
+        return;
+      }
+
+      if (!state.bossDefeated) {
+        questBox.style.display = 'none';
+        bossBox.style.display = 'block';
+        krampusBox.style.display = 'none';
+        finalVictoryBox.style.display = 'none';
+        gameContent.style.display = 'none';
+        avatarEl.textContent = '🎅🛡️';
+        activeHat.style.display = (state.activeSkin === 'tree' || state.activeSkin === 'snowman' || state.activeSkin === 'krampus') ? 'none' : 'block';
+        return;
+      }
+
+      questBox.style.display = 'none';
+      bossBox.style.display = 'none';
+
+      if (state.krampusDefeated) {
+        krampusBox.style.display = 'none';
+        finalVictoryBox.style.display = 'block';
+        gameContent.style.display = 'none';
+        avatarEl.textContent = '🎄🪑';
+      } else {
+        krampusBox.style.display = 'block';
+        finalVictoryBox.style.display = 'none';
+        gameContent.style.display = 'none';
+        avatarEl.textContent = '🎅⚡';
+      }
+
+      activeHat.style.display = (state.activeSkin === 'tree' || state.activeSkin === 'snowman' || state.activeSkin === 'krampus') ? 'none' : 'block';
+    }
+
+    function santaTalk() { state.santaQuest = 'dialogue_active'; saveState(); updateUI(); }
+    function acceptQuest() { state.santaQuest = 'searching'; saveState(); updateUI(); }
+    function refuseQuest() { state.santaQuest = 'refused'; saveState(); updateUI(); }
+    function resetQuest() { state.santaQuest = 'dialogue_active'; saveState(); updateUI(); }
+    
+    function collectSantaHat() {
+      if (state.santaQuest === 'searching') {
+        state.santaQuest = 'found';
+        state.hasSantaHat = true;
+        spawnFloatingText(window.innerWidth / 2, window.innerHeight / 2, '🎒 Шапка найдена!');
+        saveState(); updateUI();
+      }
+    }
+
+    function completeQuest() {
+      state.santaQuest = 'completed';
+      saveState();
+      switchTab('santa');
+      updateUI();
+    }
+
+    function startTreeQuest() {
+      state.treeQuestStatus = 'active';
+      state.hasShovel = true;
+      spawnFloatingText(window.innerWidth / 2, window.innerHeight / 2, '⛏️ Получена лопата!');
+      saveState(); updateUI();
+    }
+
+    function digOutTree() {
+      if (state.treeQuestStatus === 'active') {
+        state.treeQuestStatus = 'dug';
+        state.hasTreeItem = true;
+        spawnFloatingText(window.innerWidth / 2, window.innerHeight / 2, '🌲 Ёлка успешно откопана!');
+        saveState(); updateUI();
+      }
+    }
+
+    function deliverTree() {
+      state.treeQuestStatus = 'done';
+      const reward = 1000000000;
+      state.balance += reward;
+      spawnFloatingText(window.innerWidth / 2, window.innerHeight / 2 - 40, `+${reward.toLocaleString()} 🪙 НАГРАДА!`);
+      saveState(); updateUI();
+    }
+
+    function attackBoss(e) {
+      if (state.bossDefeated) return;
+      const damage = state.tapPower * 5;
+      state.snowmanHP = Math.max(0, state.snowmanHP - damage);
+      spawnFloatingText(e.clientX, e.clientY, `-${damage} ⚔️`);
+      if (state.snowmanHP <= 0) {
+        state.bossDefeated = true;
+        const reward = 25000000;
+        state.balance += reward;
+        spawnFloatingText(window.innerWidth / 2, window.innerHeight / 2 - 50, `+${reward.toLocaleString()} 🪙 СНЕГОВИК ПОБЕЖЕН!`);
+      }
+      saveState();
+      updateUI();
+    }
+
+    function attackKrampus(e) {
+      if (state.krampusDefeated) return;
+      const damage = (state.tapPower + state.santaPower * 5) * 10;
+      state.krampusHP = Math.max(0, state.krampusHP - damage);
+      
+      if (state.furyProgress < 10000) {
+        state.furyProgress = Math.min(10000, state.furyProgress + damage);
+      }
+
+      spawnFloatingText(e.clientX, e.clientY, `-${damage.toLocaleString()} ⚡`);
+
+      if (state.krampusHP <= 0) {
+        state.krampusDefeated = true;
+        state.krampusBeatenOnce = true;
+        const reward = 50000000000; // 50 миллиардов
+        state.balance += reward;
+        spawnFloatingText(window.innerWidth / 2, window.innerHeight / 2 - 50, '👹 КРАМПУС ПОВЕРЖЕН! +50 лярдов!');
+      }
+      saveState();
+      updateUI();
+    }
+
+    function useSantaFury(e) {
+      if (state.krampusDefeated || state.furyProgress < 10000) return;
+      const furyDamage = 1000000;
+      state.krampusHP = Math.max(0, state.krampusHP - furyDamage);
+      state.furyProgress = 0;
+
+      const clientX = e ? e.clientX : window.innerWidth / 2;
+      const clientY = e ? e.clientY : window.innerHeight / 2;
+      spawnFloatingText(clientX, clientY, `-1 000 000 🎅🔥`, true);
+
+      if (state.krampusHP <= 0) {
+        state.krampusDefeated = true;
+        state.krampusBeatenOnce = true;
+        const reward = 50000000000; // 50 миллиардов
+        state.balance += reward;
+        spawnFloatingText(window.innerWidth / 2, window.innerHeight / 2 - 50, '👹 КРАМПУС ПОВЕРЖЕН! +50 лярдов!');
+      }
+      saveState();
+      updateUI();
+    }
+
+    function resetEventOnly() {
+      state.krampusHP = state.krampusMaxHP;
+      state.krampusDefeated = false;
+      state.furyProgress = 0;
+      saveState();
+      updateUI();
+      alert('🔄 Ивент сброшен! Вы можете переиграть Крампуса, а все ваши монеты и улучшения сохранены.');
+    }
+
+    setInterval(() => {
+      if (state.bossDefeated && !state.krampusDefeated) {
+        const regen = 10000;
+        state.krampusHP = Math.min(state.krampusMaxHP, state.krampusHP + regen);
+        updateUI();
+        saveState();
+      }
+    }, 1000);
+
+    function spawnFloatingText(x, y, text, isSpecialEffect = false) {
+      const el = document.createElement('div');
+      el.className = 'floating-num';
+      el.textContent = text;
+      if (isSpecialEffect) el.style.color = '#f59e0b';
+      el.style.left = (x - 15) + 'px';
+      el.style.top = (y - 25) + 'px';
+      document.body.appendChild(el);
+      setTimeout(() => el.remove(), 800);
+    }
+
+    coinEl.addEventListener('pointerdown', (e) => {
+      if (state.energy < 1) return;
+
+      state.balance += state.tapPower;
+      state.energy = Math.max(0, state.energy - 1);
+      coinWrapperEl.classList.add('pressed');
+      
+      let floatText = '+' + state.tapPower;
+      spawnFloatingText(e.clientX, e.clientY, floatText);
+
+      setTimeout(() => coinWrapperEl.classList.remove('pressed'), 80);
+      updateUI(); saveState();
+    });
+
+    santaContainer.addEventListener('pointerdown', (e) => {
+      if (state.santaQuest !== 'completed') return; 
+      if (state.treeQuestStatus === 'none' && state.totalSantaGifts < 10000) {} 
+      else if (state.treeQuestStatus === 'active' || state.treeQuestStatus === 'dug') return; 
+
+      state.energy = Math.max(0, state.energy - 1);
+      state.santaProgress += state.santaPower;
+      
+      if (state.treeQuestStatus === 'none') {
+        state.totalSantaGifts += state.santaPower;
+      }
+      
+      santaAvatar.classList.add('pressed');
+      spawnFloatingText(e.clientX, e.clientY, '+' + state.santaPower + '🎁');
+      setTimeout(() => santaAvatar.classList.remove('pressed'), 80);
+
+      if (state.santaProgress >= state.santaGoalMax) {
+        const bonus = state.santaBonus;
+        state.balance += bonus;
+        spawnFloatingText(window.innerWidth / 2, window.innerHeight / 2 - 50, '+' + bonus.toLocaleString() + ' 🪙 ПОДАРОК!');
+        state.santaLevel++;
+        state.santaProgress = 0;
+        state.santaGoalMultiplier = Math.round((state.santaGoalMultiplier * 1.05) * 100) / 100;
+        state.santaGoalMax = Math.floor(100 * state.santaGoalMultiplier);
+      }
+
+      updateUI(); saveState();
+    });
+
+    function buyUpgrade(type) {
+      if (type === 'tap' && state.balance >= state.tapCost) {
+        state.balance -= state.tapCost; state.tapLvl++; state.tapPower += 1; state.tapCost = Math.floor(state.tapCost * 1.7);
+      } else if (type === 'auto' && state.balance >= state.autoCost) {
+        state.balance -= state.autoCost; state.autoLvl++; state.autoIncome += 2; state.autoCost = Math.floor(state.autoCost * 1.8);
+      } else if (type === 'energy' && state.balance >= state.energyCost) {
+        state.balance -= state.energyCost; state.energyLvl++; state.maxEnergy += 250; state.energy = state.maxEnergy; state.energyCost = Math.floor(state.energyCost * 1.6);
+      }
+      try { if (tg && tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('success'); } catch(e) {}
+      updateUI(); saveState();
+    }
+
+    function buySantaUpgrade(type) {
+      if (type === 'power' && state.balance >= state.santaPowerCost) {
+        state.balance -= state.santaPowerCost; 
+        state.santaPowerLvl++; 
+        state.santaPower += 1; 
+        state.santaPowerCost = Math.floor(state.santaPowerCost * 1.6);
+      } else if (type === 'bonus' && state.balance >= state.santaBonusCost) {
+        state.balance -= state.santaBonusCost; 
+        state.santaBonusLvl++; 
+        state.santaBonus = Math.floor(state.santaBonus * 1.5); 
+        state.santaBonusCost = Math.floor(state.santaBonusCost * 1.7);
+      }
+      try { if (tg && tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('success'); } catch(e) {}
+      updateUI(); 
+      saveState();
+    }
+
+    function openAdventModal() { document.getElementById('advent-modal').classList.add('active'); renderAdventGrid(); }
+    function closeAdventModal() { document.getElementById('advent-modal').classList.remove('active'); }
+
+    function renderAdventGrid() {
+      const container = document.getElementById('advent-grid-container');
+      let html = '';
+      const now = new Date();
+      const currentYear = now.getFullYear();
+      const adventStart = new Date(currentYear, 11, 1);
+      const isBeforeDec1 = now < adventStart;
+      const currentMonth = now.getMonth();
+      const currentDay = (currentMonth === 11) ? now.getDate() : (currentMonth > 11 ? 31 : 0);
+
+      for (let day = 1; day <= 31; day++) {
+        const isClaimed = state.claimedAdventDays.includes(day);
+        let statusClass = '';
+        let descText = ADVENT_REWARDS[day].text;
+
+        if (isBeforeDec1) { statusClass = 'locked'; descText = '🔒 Закрыто'; }
+        else if (isClaimed) { statusClass = 'claimed'; descText = '✅ Забрано'; }
+        else if (day <= currentDay) { statusClass = 'available'; descText = ADVENT_REWARDS[day].text; }
+        else { statusClass = 'locked'; descText = `📅 ${day} дек`; }
+
+        html += `<div class="advent-card ${statusClass}" onclick="clickAdventDay(${day}, ${isBeforeDec1}, ${currentDay})"><div class="advent-day">${day} дек</div><div class="advent-desc">${descText}</div></div>`;
+      }
+      container.innerHTML = html;
+    }
+
+    function clickAdventDay(day, isBeforeDec1, currentDay) {
+      if (isBeforeDec1) { alert('🎄 Адвент-календарь откроется 1 декабря!'); return; }
+      if (day > currentDay) { alert('⏳ Этот день еще не наступил!'); return; }
+      if (state.claimedAdventDays.includes(day)) { alert('🎁 Вы уже забрали награду!'); return; }
+
+      const reward = ADVENT_REWARDS[day];
+      if (reward.type === 'coins') state.balance += reward.val;
+      else if (reward.type === 'energy') state.energy = state.maxEnergy;
+      else if (reward.type === 'tap') state.tapPower += reward.val;
+
+      state.claimedAdventDays.push(day);
+      saveState(); updateUI(); renderAdventGrid();
+    }
+
+    function openInventoryModal() { document.getElementById('inventory-modal').classList.add('active'); document.getElementById('promo-input').value = ''; document.getElementById('promo-msg').textContent = ''; switchInvTab('skins'); }
+    function closeInventoryModal() { document.getElementById('inventory-modal').classList.remove('active'); }
+
+    function switchInvTab(tab) {
+      document.getElementById('inv-section-skins').classList.toggle('active', tab === 'skins');
+      document.getElementById('inv-section-skinshop').classList.toggle('active', tab === 'skinshop');
+      document.getElementById('inv-section-promos').style.display = (tab === 'promos') ? 'flex' : 'none';
+      document.getElementById('inv-tabs-bar').style.display = tab === 'skinshop' ? 'none' : 'flex';
+      
+      if (tab === 'skinshop') {
+        document.getElementById('modal-main-title').textContent = '🛒 Магазин скинов';
+        updateSkinShopUI();
+      } else {
+        document.getElementById('modal-main-title').textContent = '🎒 Инвентарь';
+        if (tab === 'skins') updateSkinsInventoryUI();
+      }
+    }
+
+    function updateSkinsInventoryUI() {
+      const container = document.getElementById('skins-inventory-container');
+      let html = '';
+
+      if (state.hasSantaHat) {
+        html += `<div class="skin-item"><div class="skin-info"><div class="skin-preview">🎅</div><div><div class="skin-name">Шапка Санты</div><div class="skin-desc">Найдена по квесту</div></div></div><button class="skin-action-btn active-skin">Надета</button></div>`;
+      }
+      if (state.hasShovel) {
+        html += `<div class="skin-item"><div class="skin-info"><div class="skin-preview">⛏️</div><div><div class="skin-name">Лопата</div><div class="skin-desc">Инструмент для раскопок</div></div></div><button class="skin-action-btn active-skin">В руке</button></div>`;
+      }
+      if (state.hasTreeItem) {
+        html += `<div class="skin-item"><div class="skin-info"><div class="skin-preview">🌲</div><div><div class="skin-name">Новогодняя Ёлка</div><div class="skin-desc">Отдана Санте</div></div></div><button class="skin-action-btn active-skin">Сдано</button></div>`;
+      }
+
+      if (state.ownedSkins.includes('tree')) {
+        const isActive = state.activeSkin === 'tree';
+        html += `<div class="skin-item"><div class="skin-info"><div class="skin-preview">🎄</div><div><div class="skin-name">Елочка (Q)</div><div class="skin-desc">Праздничный скин</div></div></div><button class="skin-action-btn ${isActive ? 'active-skin' : ''}" onclick="toggleSkin('tree')">${isActive ? 'Надет' : 'Надеть'}</button></div>`;
+      }
+
+      if (state.ownedSkins.includes('snowman')) {
+        const isActive = state.activeSkin === 'snowman';
+        html += `<div class="skin-item"><div class="skin-info"><div class="skin-preview">⛄</div><div><div class="skin-name">Снеговик</div><div class="skin-desc">Победитель босса</div></div></div><button class="skin-action-btn ${isActive ? 'active-skin' : ''}" onclick="toggleSkin('snowman')">${isActive ? 'Надет' : 'Надеть'}</button></div>`;
+      }
+
+      if (state.ownedSkins.includes('krampus')) {
+        const isActive = state.activeSkin === 'krampus';
+        html += `<div class="skin-item"><div class="skin-info"><div class="skin-preview">👹</div><div><div class="skin-name">Крампус</div><div class="skin-desc">Повелитель холода</div></div></div><button class="skin-action-btn ${isActive ? 'active-skin' : ''}" onclick="toggleSkin('krampus')">${isActive ? 'Надет' : 'Надеть'}</button></div>`;
+      }
+
+      if (!state.hasSantaHat && !state.hasShovel && !state.bossDefeated && !state.hasTreeItem && state.ownedSkins.length === 0) {
+        html += `<div class="no-skins-box"><div class="no-skins-text">Инвентарь пока пуст. Выполняйте квесты или загляните в магазин!</div></div>`;
+      }
+
+      html += `<button class="goto-shop-btn" onclick="switchInvTab('skinshop')">🛒 Магазин скинов</button>`;
+      container.innerHTML = html;
+    }
+
+    function buyTreeSkin() {
+      const cost = 1000000;
+      if (state.balance >= cost && !state.ownedSkins.includes('tree')) {
+        state.balance -= cost;
+        state.ownedSkins.push('tree');
+        state.activeSkin = 'tree';
+        saveState(); updateUI(); updateSkinShopUI();
+      }
+    }
+
+    function buySnowmanSkin() {
+      const cost = 1000000000;
+      if (state.balance >= cost && !state.ownedSkins.includes('snowman')) {
+        state.balance -= cost;
+        state.ownedSkins.push('snowman');
+        state.activeSkin = 'snowman';
+        saveState(); updateUI(); updateSkinShopUI();
+      }
+    }
+
+    function buyKrampusSkin() {
+      const cost = 1000000000000; // 1 Триллион
+      if (state.balance >= cost && !state.ownedSkins.includes('krampus')) {
+        state.balance -= cost;
+        state.ownedSkins.push('krampus');
+        state.activeSkin = 'krampus';
+        saveState(); updateUI(); updateSkinShopUI();
+      }
+    }
+
+    function updateSkinShopUI() {
+      const container = document.getElementById('skin-shop-items-container');
+      let html = '';
+      const isTreeOwned = state.ownedSkins.includes('tree');
+      html += `
+        <div class="skin-item">
+          <div class="skin-info">
+            <div class="skin-preview">🎄</div>
+            <div>
+              <div class="skin-name">Елочка (Q)</div>
+              <div class="skin-desc">1 000 000 🪙</div>
+            </div>
+          </div>
+          <button class="skin-action-btn ${isTreeOwned ? 'disabled' : ''}" onclick="buyTreeSkin()">${isTreeOwned ? 'Куплено' : '1 000 000 🪙'}</button>
+        </div>
+      `;
+
+      if (state.bossDefeated) {
+        const isSnowmanOwned = state.ownedSkins.includes('snowman');
+        html += `
+          <div class="skin-item" style="margin-top: 8px;">
+            <div class="skin-info">
+              <div class="skin-preview">⛄</div>
+              <div>
+                <div class="skin-name">Снеговик</div>
+                <div class="skin-desc">1 000 000 000 🪙 (1 лярд)</div>
+              </div>
+            </div>
+            <button class="skin-action-btn ${isSnowmanOwned ? 'disabled' : ''}" onclick="buySnowmanSkin()">${isSnowmanOwned ? 'Куплено' : '1 Лярд 🪙'}</button>
+          </div>
+        `;
+      } else {
+        html += `
+          <div style="font-size: 11px; color: #94a3b8; margin-top: 15px; text-align: center;">
+            🔒 Скин Снеговика разблокируется после победы над Злым Снеговиком!
+          </div>
+        `;
+      }
+
+      if (state.krampusBeatenOnce) {
+        const isKrampusOwned = state.ownedSkins.includes('krampus');
+        html += `
+          <div class="skin-item" style="margin-top: 8px;">
+            <div class="skin-info">
+              <div class="skin-preview">👹</div>
+              <div>
+                <div class="skin-name">Крампус</div>
+                <div class="skin-desc">1 000 000 000 000 🪙 (1 Трил.)</div>
+              </div>
+            </div>
+            <button class="skin-action-btn ${isKrampusOwned ? 'disabled' : ''}" onclick="buyKrampusSkin()">${isKrampusOwned ? 'Куплено' : '1 Трил. 🪙'}</button>
+          </div>
+        `;
+      } else {
+        html += `
+          <div style="font-size: 11px; color: #94a3b8; margin-top: 15px; text-align: center;">
+            🔒 Скин Крампуса разблокируется после победы над Ледяным Крампусом!
+          </div>
+        `;
+      }
+
+      container.innerHTML = html;
+    }
+
+    function toggleSkin(skinId) {
+      state.activeSkin = (state.activeSkin === skinId) ? null : skinId;
+      saveState(); updateUI(); updateSkinsInventoryUI();
+    }
+
+    function redeemPromo() {
+      const input = document.getElementById('promo-input');
+      const msgEl = document.getElementById('promo-msg');
+      const code = input.value.trim().toUpperCase();
+
+      if (!code) { msgEl.className = 'promo-msg error'; msgEl.textContent = 'Введите промокод'; return; }
+      if (state.usedPromos.includes(code)) { msgEl.className = 'promo-msg error'; msgEl.textContent = 'Уже использован!'; return; }
+
+      const promo = PROMO_CODES[code];
+      if (!promo) { msgEl.className = 'promo-msg error'; msgEl.textContent = 'Неверный код'; return; }
+
+      if (promo.type === 'coins') state.balance += promo.value;
+      else if (promo.type === 'energy') state.energy = state.maxEnergy;
+      else if (promo.type === 'tap') state.tapPower += promo.value;
+
+      state.usedPromos.push(code);
+      saveState(); updateUI();
+      msgEl.className = 'promo-msg success';
+      msgEl.textContent = 'Успешно: ' + promo.text;
+      input.value = '';
+    }
+
+    setInterval(() => {
+      if (state.autoIncome > 0) {
+        state.balance += state.autoIncome;
+      }
+      if (state.energy < state.maxEnergy) state.energy = Math.min(state.maxEnergy, state.energy + 3);
+      updateUI(); saveState();
+    }, 1000);
+
+    updateUI();
+  </script>
+</body>
+</html>
